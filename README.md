@@ -1,6 +1,7 @@
 # Location Server
 
-A small OwnTracks-compatible HTTP receiver backed by SQLite.
+A small self-hosted server that receives location updates from OwnTracks clients,
+stores them in SQLite, and exposes the current location over HTTP and MCP.
 
 ## Use cases
 
@@ -36,7 +37,8 @@ location service. The loopback port remains available for local diagnostics.
 
 ## iPhone app configuration
 
-In OwnTracks, select HTTP mode and configure:
+In [OwnTracks for iPhone](https://apps.apple.com/us/app/owntracks/id692424691), select
+HTTP mode and configure:
 
 ```text
 URL:      https://location.example.com/ingest
