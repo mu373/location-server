@@ -1,0 +1,89 @@
+services:
+  location-server:
+    build: .
+    container_name: location-server
+    user: node
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,noexec,size=64m,uid=1000,gid=1000,mode=1777
+    expose:
+      - "8080"
+    environment:
+      - AUTH_USER=${AUTH_USER:?AUTH_USER must be set}
+      - AUTH_PASS=${AUTH_PASS:?AUTH_PASS must be set}
+      - PORT=8080
+      - DB_PATH=/data/location.db
+    volumes:
+      - ./data:/data
+    ports:
+      - "${LOCATION_BIND_ADDRESS:-127.0.0.1}:${LOCATION_PORT:-8080}:8080"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 512m
+    cpus: 1.0
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:8080/health').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks:
+      - location-api
+
+  location-mcp:
+    profiles:
+      - agent
+    build: .
+    container_name: location-mcp
+    command: ["node", "src/mcp-main.js"]
+    restart: unless-stopped
+    init: true
+    read_only: true
+    user: node
+    environment:
+      AUTH_USER: ${AUTH_USER:?AUTH_USER must be set}
+      AUTH_PASS: ${AUTH_PASS:?AUTH_PASS must be set}
+      LOCATION_API_URL: http://location-server:8080
+      LOCATION_API_TIMEOUT_MS: 5000
+      MCP_PORT: 8799
+    expose:
+      - "8799"
+    depends_on:
+      location-server:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:8799/health').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 64
+    mem_limit: 256m
+    cpus: 0.5
+    networks:
+      - location-api
+      - agent
+
+networks:
+  location-api:
+    internal: true
+  agent:
+    name: ${AGENT_NETWORK:-agent}
+    external: true

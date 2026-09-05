@@ -1,0 +1,17 @@
+services:
+  location-server:
+    networks:
+      - traefik
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${TRAEFIK_NETWORK:-traefik}
+      traefik.http.routers.location-server.rule: Host(`${LOCATION_HOST:?LOCATION_HOST must be set}`)
+      traefik.http.routers.location-server.entrypoints: ${TRAEFIK_ENTRYPOINT:-websecure}
+      traefik.http.routers.location-server.tls.certresolver: ${TRAEFIK_CERT_RESOLVER:?TRAEFIK_CERT_RESOLVER must be set}
+      traefik.http.routers.location-server.service: location-server
+      traefik.http.services.location-server.loadbalancer.server.port: "8080"
+
+networks:
+  traefik:
+    name: ${TRAEFIK_NETWORK:-traefik}
+    external: true

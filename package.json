@@ -1,0 +1,21 @@
+{
+  "name": "location-server",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "packageManager": "pnpm@11.25.0",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "start:mcp": "node src/mcp-main.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "better-sqlite3": "^11.5.0",
+    "hono": "^4.6.0",
+    "zod": "^4.5.4"
+  }
+}
