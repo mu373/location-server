@@ -2,13 +2,13 @@
 
 A small OwnTracks-compatible HTTP receiver backed by SQLite.
 
-## When to use it
+## Use cases
 
 Use this server as a small self-hosted destination for OwnTracks when a local service,
 dashboard, or agent needs the latest location and waypoint name. It is designed for one
 person or tracker rather than as a multi-user tracking platform.
 
-## Run
+## Setup
 
 ```sh
 cp .env.example .env
@@ -34,7 +34,7 @@ docker compose -f docker-compose.yml -f compose.traefik.yml up -d --build
 The overlay joins the configured external Traefik network and publishes only the
 location service. The loopback port remains available for local diagnostics.
 
-## Configure the OwnTracks iPhone app
+## iPhone app configuration
 
 In OwnTracks, select HTTP mode and configure:
 
@@ -63,7 +63,7 @@ Create named circular waypoints in the app to make `/current` report places and 
 Both authenticated endpoints use HTTP Basic authentication from `AUTH_USER`
 and `AUTH_PASS`. SQLite data is persisted in `./data/location.db`.
 
-## How current location is resolved
+## Location resolving logic
 
 `/current` returns the newest `location` message and resolves its place from stored
 waypoints. It first checks whether the coordinates fall within a waypoint's radius
@@ -73,7 +73,18 @@ precedence, and the place is `null` when neither method finds one.
 
 ## Agent MCP
 
-The optional `agent` Compose profile runs a read-only Streamable HTTP MCP facade:
+The optional `agent` Compose profile exposes one read-only MCP tool over Streamable
+HTTP:
+
+| Tool | Arguments | Result |
+| --- | --- | --- |
+| `get_current_location` | None | Latest `lat`, `lon`, `acc`, `updated_at` (Unix time), and matched `place` (`name` and `rid`). Values are `null` when unavailable. |
+
+The tool returns the same resolved data as `GET /current`. It cannot request a new
+location from the phone, read location history, modify waypoints, or reverse-geocode
+coordinates.
+
+Start the MCP service with:
 
 ```sh
 docker compose --profile agent up -d --build
