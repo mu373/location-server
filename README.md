@@ -13,7 +13,8 @@ person or tracker rather than as a multi-user tracking platform.
 
 ```sh
 cp .env.example .env
-# Replace AUTH_PASS in .env before continuing.
+openssl rand -hex 32
+# Paste the generated value into AUTH_PASS in .env.
 pnpm install
 docker compose up -d --build
 curl http://127.0.0.1:8080/health
