@@ -2,6 +2,12 @@
 
 A small OwnTracks-compatible HTTP receiver backed by SQLite.
 
+## When to use it
+
+Use this server as a small self-hosted destination for OwnTracks when a local service,
+dashboard, or agent needs the latest location and waypoint name. It is designed for one
+person or tracker rather than as a multi-user tracking platform.
+
 ## Run
 
 ```sh
@@ -28,6 +34,26 @@ docker compose -f docker-compose.yml -f compose.traefik.yml up -d --build
 The overlay joins the configured external Traefik network and publishes only the
 location service. The loopback port remains available for local diagnostics.
 
+## Configure the OwnTracks iPhone app
+
+In OwnTracks, select HTTP mode and configure:
+
+```text
+URL:      https://location.example.com/ingest
+Username: <AUTH_USER>
+Password: <AUTH_PASS>
+```
+
+Use the app's manual publish button, then verify the result:
+
+```sh
+curl -u '<AUTH_USER>:<AUTH_PASS>' https://location.example.com/current
+```
+
+Create named circular waypoints in the app to make `/current` report places and react to
+`enter` / `leave` events. Use HTTPS outside a trusted local network. See the OwnTracks
+[iOS guide](https://owntracks.org/booklet/features/ios/) for detailed app setup.
+
 ## Endpoints
 
 - `GET /health`: unauthenticated liveness check
@@ -36,6 +62,14 @@ location service. The loopback port remains available for local diagnostics.
 
 Both authenticated endpoints use HTTP Basic authentication from `AUTH_USER`
 and `AUTH_PASS`. SQLite data is persisted in `./data/location.db`.
+
+## How current location is resolved
+
+`/current` returns the newest `location` message and resolves its place from stored
+waypoints. It first checks whether the coordinates fall within a waypoint's radius
+(including reported GPS accuracy). If none match, it falls back to waypoint transition
+state: `enter` activates a place and `leave` deactivates it. Coordinate matching takes
+precedence, and the place is `null` when neither method finds one.
 
 ## Agent MCP
 
@@ -50,6 +84,11 @@ endpoint is available to containers on that network at
 `http://location-mcp:8799/mcp`. The MCP process proxies the private REST service and
 keeps its Basic Auth credentials out of the client container. It is not published
 through Traefik or directly on a host port.
+
+## Privacy and retention
+
+SQLite contains precise location history and raw OwnTracks payloads. It is unencrypted
+and has no automatic retention policy, so protect the data directory and endpoint.
 
 ## License
 
