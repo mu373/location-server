@@ -16,6 +16,6 @@
     "@modelcontextprotocol/sdk": "^1.30.0",
     "better-sqlite3": "^11.5.0",
     "hono": "^4.6.0",
-    "zod": "^4.5.4"
+    "zod": "^4.6.6"
   }
 }
